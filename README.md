@@ -6,7 +6,9 @@ Installation
 
     Click the following link to automatically install the script:
 
-    📥 Install ParagonAnnotationTemplateAndSurveyACReminder-2.6.user.js
+    📥 Install 
+
+    https://github.com/ChristikChris/Survey_AC_Reminder_Adding_Annotation_Button/raw/refs/heads/main/ParagonAnnotationTemplateAndSurveyACReminder-2.6.user.js
 
     Your userscript manager will automatically open the installation page - click "Install"
 
