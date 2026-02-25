@@ -1,8 +1,8 @@
 
 // ==UserScript==
-// @name         Paragon Annotation Template & Survey Reminder
+// @name         Paragon Annotation Template & Survey Reminder and Pull AC button
 // @namespace    http://tampermonkey.net/
-// @version      2.6
+// @version      2.7
 // @description  Adds annotation template button, survey reminder, and Pull AC button
 // @author       christik@ & Sandhya Tammireddy
 // @match        https://paragon*.amazon.com/*
@@ -18,7 +18,7 @@
 (function() {
     'use strict';
 
-    console.log('=== Paragon Merged Script v2.6 loaded ===');
+    console.log('=== Paragon Merged Script v2.7 loaded ===');
     console.log('Current URL:', window.location.href);
 
     // ========== ANNOTATION TEMPLATE SECTION ==========
@@ -298,7 +298,6 @@ Case status:`;
             </div>
         `;
 
-        // Use fixed positioning at the top of the viewport
         Object.assign(notification.style, {
             position: 'fixed',
             top: '80px',
@@ -431,6 +430,21 @@ Case status:`;
     let pullAcReappearTimer = null;
     let pullAcClickCount = 0;
 
+    // Timing configuration (in milliseconds):
+    // - First appearance: 15 minutes
+    // - After 1st dismiss: reappear after 10 minutes
+    // - After 2nd dismiss: reappear after 5 minutes (red/urgent)
+    // - After 3rd dismiss: disappears permanently (max 3 dismissals)
+    const PULL_AC_INITIAL_DELAY   = 15 * 60 * 1000; // 15 minutes
+    const PULL_AC_REAPPEAR_DELAY_1 = 10 * 60 * 1000; // 10 minutes after 1st click
+    const PULL_AC_REAPPEAR_DELAY_2 =  5 * 60 * 1000; //  5 minutes after 2nd click
+    const PULL_AC_MAX_CLICKS = 3; // disappears permanently after 3rd dismissal
+
+    function getPullAcReappearDelay() {
+        if (pullAcClickCount === 1) return PULL_AC_REAPPEAR_DELAY_1;
+        return PULL_AC_REAPPEAR_DELAY_2;
+    }
+
     function createPullAcButton() {
         if (pullAcButton && document.body.contains(pullAcButton)) {
             return;
@@ -440,7 +454,7 @@ Case status:`;
         pullAcButton.id = 'pull-ac-button';
         pullAcButton.className = 'pull-ac-button';
 
-        // Change text based on click count
+        // Change text and style based on click count
         if (pullAcClickCount >= 2) {
             pullAcButton.textContent = 'Please pull an andon cord now';
             pullAcButton.classList.add('pull-ac-button-urgent');
@@ -454,10 +468,16 @@ Case status:`;
 
             pullAcButton.remove();
 
-            // Reappear after 10 seconds
+            // Stop after 3 dismissals
+            if (pullAcClickCount >= PULL_AC_MAX_CLICKS) {
+                console.log('Pull AC button: max dismissals reached, not reappearing.');
+                return;
+            }
+
+            // Reappear after the appropriate delay
             pullAcReappearTimer = setTimeout(function() {
                 createPullAcButton();
-            }, 10000);
+            }, getPullAcReappearDelay());
         });
 
         document.body.appendChild(pullAcButton);
@@ -465,10 +485,10 @@ Case status:`;
     }
 
     function initPullAcButton() {
-        // Show button after 15 seconds
+        // Show button after 15 minutes
         pullAcTimer = setTimeout(function() {
             createPullAcButton();
-        }, 15000);
+        }, PULL_AC_INITIAL_DELAY);
     }
 
     // ========== INITIALIZATION ==========
